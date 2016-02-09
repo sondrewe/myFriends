@@ -1,0 +1,5 @@
+gcm:
+  application_key: AIzaSyB9qZ39krdSNo4R5_7jWHOSzhzH-jpQiQM
+
+proximity_km: 3
+location_expiration_time_minutes: 60

@@ -1,6 +1,8 @@
 package no.bouvet.sandvika.myfriends.rest.eventhandler;
 
 import no.bouvet.sandvika.myfriends.rest.model.User;
+import org.springframework.data.rest.core.annotation.HandleAfterCreate;
+import org.springframework.data.rest.core.annotation.HandleAfterSave;
 import org.springframework.data.rest.core.annotation.HandleBeforeCreate;
 import org.springframework.data.rest.core.annotation.RepositoryEventHandler;
 import org.springframework.stereotype.Component;
@@ -19,4 +21,10 @@ public class UserEventHandler {
     public void handleBeforeCreate(User user) {
         user.setLastUpdate(new Date());
     }
+
+    @HandleAfterCreate
+    public void handleAfterCreate(User user) {
+        System.out.println("After Save!!!");
+    }
+
 }
