@@ -11,12 +11,8 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 
-import com.android.volley.Request.Method;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.Volley;
+import com.bouvet.sandvika.myfriends.model.User;
+import com.bouvet.sandvika.myfriends.rest.MyFriendsRestService;
 import com.bouvet.sandvika.myfriends.services.RegistrationIntentService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -30,17 +26,20 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import org.json.JSONException;
-import org.json.JSONObject;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MapsActivity extends AppCompatActivity implements LocationListener, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
 
-    private final static String REGISTER_USER_URL = "http://192.168.1.124:8080/user";
-    private final static String REGISTER_LOCATION_URL = "http://192.168.1.124:8080/user/kris/updatePosition";
+    private final static String BASE_URL = "http://192.168.1.124:8080";
 
     private GoogleApiClient googleApiClient;
-    private RequestQueue requestQueue;
     private BroadcastReceiver messageReceiver;
+    private MyFriendsRestService service;
+    private User user;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,16 +57,20 @@ public class MapsActivity extends AppCompatActivity implements LocationListener,
                 .addApi(LocationServices.API)
                 .build();
 
-        requestQueue = Volley.newRequestQueue(this);
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
 
-        createUser();
+        service = retrofit.create(MyFriendsRestService.class);
 
         messageReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 System.out.println("onreceive");
 
-                createUser();
+                String key = intent.getStringExtra(RegistrationIntentService.TOKEN);
+                user = createUser(key);
             }
         };
 
@@ -76,38 +79,26 @@ public class MapsActivity extends AppCompatActivity implements LocationListener,
 
     }
 
-    private void createUser() {
+    private User createUser(String regKey) {
 
-        JsonObjectRequest createUserRequest = new JsonObjectRequest(Method.POST, REGISTER_USER_URL, getUserAsJSON(), new Response.Listener<JSONObject>() {
+        final User user = new User("kris", "kris", "kris", regKey);
+
+        Call<Void> call = service.createUser(user);
+        call.enqueue(new Callback<Void>() {
             @Override
-            public void onResponse(JSONObject response) {
-                System.out.println("ok");
+            public void onResponse(Call<Void> call, Response<Void> response) {
+                System.out.println("Success!!!");
             }
-        }, new Response.ErrorListener() {
+
             @Override
-            public void onErrorResponse(VolleyError error) {
-                System.out.println("failed");
+            public void onFailure(Call<Void> call, Throwable t) {
+                System.out.println("Failed!!!!!");
             }
         });
 
-        requestQueue.add(createUserRequest);
+        return user;
 
     }
-
-    private JSONObject getUserAsJSON() {
-        JSONObject jsonObject = new JSONObject();
-        try {
-            jsonObject.put("userName", "kris");
-            jsonObject.put("firstName", "kristoffer");
-            jsonObject.put("lastName", "mysen");
-            jsonObject.put("regId", "982");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-
-        return jsonObject;
-    }
-
 
     @Override
     protected void onStart() {
@@ -117,13 +108,16 @@ public class MapsActivity extends AppCompatActivity implements LocationListener,
 
     @Override
     protected void onResume() {
+        IntentFilter intentFilter = new IntentFilter(RegistrationIntentService.ID_TOKEN_RECEIVED);
+        LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, intentFilter);
+
         super.onResume();
-        LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, new IntentFilter("MESSAGE"));
     }
 
     @Override
     protected void onPause() {
         LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver);
+
         super.onPause();
     }
 
@@ -177,31 +171,22 @@ public class MapsActivity extends AppCompatActivity implements LocationListener,
 
     @Override
     public void onLocationChanged(final Location location) {
-        JsonObjectRequest postLocationRequest = new JsonObjectRequest(Method.POST, REGISTER_LOCATION_URL, getLocationAsJSON(location), new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                System.out.println("something");
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                System.out.println("something else");
-                error.printStackTrace();
-            }
-        });
 
-        requestQueue.add(postLocationRequest);
+        if (user != null) {
 
-    }
+            Call<Void> locationChanged = service.updateLocation(user.getUserName(), new double[]{location.getLatitude(), location.getLongitude()});
+            locationChanged.enqueue(new Callback<Void>() {
+                @Override
+                public void onResponse(Call<Void> call, Response<Void> response) {
+                    System.out.println("success!!");
+                }
 
-    private String getLocationAsJSON(Location location) {
-        // Her burde man bruke et JSON bibliotek!
-        return "{\n" +
-                "\"location\":\"" + location.getLatitude() + "," + location.getLongitude() + "\"\n" +
-                "}";
+                @Override
+                public void onFailure(Call<Void> call, Throwable t) {
+                    System.out.println("Failure!!");
+                }
+            });
+        }
 
     }
-
-
-
 }

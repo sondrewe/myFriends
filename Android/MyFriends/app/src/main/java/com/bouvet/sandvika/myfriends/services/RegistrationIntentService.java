@@ -2,6 +2,7 @@ package com.bouvet.sandvika.myfriends.services;
 
 import android.app.IntentService;
 import android.content.Intent;
+import android.provider.SyncStateContract;
 import android.support.v4.content.LocalBroadcastManager;
 
 import com.bouvet.sandvika.myfriends.R;
@@ -12,14 +13,9 @@ import java.io.IOException;
 
 
 public class RegistrationIntentService extends IntentService {
-    /**
-     * Creates an IntentService.  Invoked by your subclass's constructor.
-     *
-     * @param name Used to name the worker thread, important only for debugging.
-     */
-    public RegistrationIntentService(String name) {
-        super(name);
-    }
+
+    public final static String ID_TOKEN_RECEIVED = "IdTokenReceived";
+    public static final String TOKEN = "token";
 
     public RegistrationIntentService() {
         super("RegistrationIntentService");
@@ -30,6 +26,10 @@ public class RegistrationIntentService extends IntentService {
         InstanceID instanceID = InstanceID.getInstance(this);
         try {
             String token = instanceID.getToken(getString(R.string.gcm_defaultSenderId), GoogleCloudMessaging.INSTANCE_ID_SCOPE, null);
+
+            Intent broadCastIntent = new Intent(ID_TOKEN_RECEIVED).putExtra(TOKEN, token);
+            LocalBroadcastManager.getInstance(this).sendBroadcast(broadCastIntent);
+
             System.out.println("Got token!" + token);
         } catch (IOException e) {
             e.printStackTrace();
