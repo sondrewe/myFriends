@@ -10,10 +10,10 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="com.bouvet.sandvika.myfriends.permission.C2D_MESSAGE" />
 
     <permission android:name="com.bouvet.sandvika.myfriends.permission.C2D_MESSAGE"
         android:protectionLevel="signature" />
-    <uses-permission android:name="com.bouvet.sandvika.myfriends.permission.C2D_MESSAGE" />
 
     <application
         android:allowBackup="true"
@@ -57,7 +57,9 @@
                 <action android:name="com.google.android.gms.iid.InstanceID" />
             </intent-filter>
         </service>
+        <service android:name=".services.RegistrationIntentService">
 
+        </service>
 
         <activity
             android:name=".MapsActivity"

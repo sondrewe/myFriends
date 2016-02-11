@@ -30,6 +30,7 @@ import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class MapsActivity extends AppCompatActivity implements LocationListener, OnMapReadyCallback, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener {
@@ -59,6 +60,8 @@ public class MapsActivity extends AppCompatActivity implements LocationListener,
 
         requestQueue = Volley.newRequestQueue(this);
 
+        createUser();
+
         messageReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -70,6 +73,7 @@ public class MapsActivity extends AppCompatActivity implements LocationListener,
 
         Intent intent = new Intent(this, RegistrationIntentService.class);
         startService(intent);
+
     }
 
     private void createUser() {
@@ -82,7 +86,7 @@ public class MapsActivity extends AppCompatActivity implements LocationListener,
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                System.out.println("ok");
+                System.out.println("failed");
             }
         });
 
@@ -90,15 +94,18 @@ public class MapsActivity extends AppCompatActivity implements LocationListener,
 
     }
 
-    private String getUserAsJSON() {
+    private JSONObject getUserAsJSON() {
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject.put("userName", "kris");
+            jsonObject.put("firstName", "kristoffer");
+            jsonObject.put("lastName", "mysen");
+            jsonObject.put("regId", "982");
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
 
-        return "{\n" +
-                "\"userName\":\"kris\",\n" +
-                "\"firstName\":\"kristoffer\",\n" +
-                "\"lastName\":\"mysen\",\n" +
-                "\"regId\":\"9999\"\n" +
-                "}";
-
+        return jsonObject;
     }
 
 
@@ -179,6 +186,7 @@ public class MapsActivity extends AppCompatActivity implements LocationListener,
             @Override
             public void onErrorResponse(VolleyError error) {
                 System.out.println("something else");
+                error.printStackTrace();
             }
         });
 
