@@ -1,9 +1,14 @@
 package com.bouvet.sandvika.myfriends;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Location;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 
 import com.android.volley.Request.Method;
@@ -12,6 +17,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.Volley;
+import com.bouvet.sandvika.myfriends.services.RegistrationIntentService;
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
@@ -33,6 +39,7 @@ public class MapsActivity extends AppCompatActivity implements LocationListener,
 
     private GoogleApiClient googleApiClient;
     private RequestQueue requestQueue;
+    private BroadcastReceiver messageReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,8 +59,17 @@ public class MapsActivity extends AppCompatActivity implements LocationListener,
 
         requestQueue = Volley.newRequestQueue(this);
 
-        createUser();
+        messageReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                System.out.println("onreceive");
 
+                createUser();
+            }
+        };
+
+        Intent intent = new Intent(this, RegistrationIntentService.class);
+        startService(intent);
     }
 
     private void createUser() {
@@ -90,6 +106,18 @@ public class MapsActivity extends AppCompatActivity implements LocationListener,
     protected void onStart() {
         googleApiClient.connect();
         super.onStart();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        LocalBroadcastManager.getInstance(this).registerReceiver(messageReceiver, new IntentFilter("MESSAGE"));
+    }
+
+    @Override
+    protected void onPause() {
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(messageReceiver);
+        super.onPause();
     }
 
     @Override
@@ -165,4 +193,7 @@ public class MapsActivity extends AppCompatActivity implements LocationListener,
                 "}";
 
     }
+
+
+
 }
