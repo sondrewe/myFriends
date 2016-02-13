@@ -49,7 +49,7 @@ public class UserController {
     }
 
     @RequestMapping(value = "/user/{id}/updatePosition", method = RequestMethod.POST)
-    public User updatePosition(@PathVariable("id") String userName, @RequestParam(name="position") double[] position) {
+    public User updatePosition(@PathVariable("id") String userName, @RequestParam(name = "position") double[] position) {
         log.info("Updating position for user " + userName + " to " + position[0] + "," + position[1]);
         User user = userRepository.findByUserName(userName);
         user.setPosition(position);
@@ -60,7 +60,7 @@ public class UserController {
     }
 
     @RequestMapping(value = "/user/{id}/addFriend", method = RequestMethod.POST)
-    public User addFriend(@PathVariable("id") String userName, @RequestParam(name="friend") String friend) {
+    public User addFriend(@PathVariable("id") String userName, @RequestParam(name = "friend") String friend) {
         User user = userRepository.findByUserName(userName);
         user.addFriend(friend);
         userRepository.save(user);
@@ -71,10 +71,17 @@ public class UserController {
      * This method does way more than it should. Refactor!
      */
     private void updateNearbyFriends(User user) {
-        List<User> currentNearby = userRepository.findByPositionNear(user.getPositionAsPoint(), new Distance(Double.parseDouble(proximity), Metrics.KILOMETERS))
-                .stream()
-                .filter(u -> user.getFriends().contains(u.getUserName()))
-                .collect(Collectors.toList());
+        List<User> currentNearby;
+        if (user.getFriends() == null || user.getFriends().isEmpty()) {
+            currentNearby = userRepository.findByPositionNear(user.getPositionAsPoint(), new Distance(Double.parseDouble(proximity), Metrics.KILOMETERS))
+                    .stream()
+                    .collect(Collectors.toList());
+        } else {
+            currentNearby = userRepository.findByPositionNear(user.getPositionAsPoint(), new Distance(Double.parseDouble(proximity), Metrics.KILOMETERS))
+                    .stream()
+                    .filter(u -> user.getFriends().contains(u.getUserName()))
+                    .collect(Collectors.toList());
+        }
         List<User> remove = findRemovedFriends(user, currentNearby);
         List<User> add = findAddedFriends(user, currentNearby);
         // Remove current user from list of nearby friends of all removed friends
@@ -89,10 +96,16 @@ public class UserController {
                 .map(User::getUserName)
                 .collect(Collectors.toSet()));
         // Notify added nearby friends about current user in proximity
-        notifier.notifyListAboutUser(add
-                .stream()
-                .filter(us1 -> us1.getFriends().contains(user.getUserName()))
-                .collect(Collectors.toList()),user);
+        if (user.getFriends() == null || user.getFriends().isEmpty()) {
+            notifier.notifyListAboutUser(add
+                    .stream()
+                    .collect(Collectors.toList()), user);
+        } else {
+            notifier.notifyListAboutUser(add
+                    .stream()
+                    .filter(us1 -> us1.getFriends().contains(user.getUserName()))
+                    .collect(Collectors.toList()), user);
+        }
         // Notify current user about added friends in proximity
         notifier.notifyUserAboutList(user, add);
     }
