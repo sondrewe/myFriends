@@ -67,6 +67,11 @@ public class UserController {
         return user;
     }
 
+    @RequestMapping(value = "/user/findAll", method = RequestMethod.GET)
+    public List<User> findAll() {
+        return userRepository.findAll();
+    }
+
     /**
      * This method does way more than it should. Refactor!
      */

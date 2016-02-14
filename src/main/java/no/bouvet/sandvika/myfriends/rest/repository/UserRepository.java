@@ -9,9 +9,6 @@ import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 import java.util.List;
 
-/**
- * Created by sondre.engell on 19.01.2016.
- */
 
 @RepositoryRestResource(collectionResourceRel = "user", path = "user")
 public interface UserRepository extends MongoRepository<User, String> {
