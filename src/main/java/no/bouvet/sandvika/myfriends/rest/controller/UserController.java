@@ -61,6 +61,7 @@ public class UserController {
 
     @RequestMapping(value = "/user/{id}/addFriend", method = RequestMethod.POST)
     public User addFriend(@PathVariable("id") String userName, @RequestParam(name = "friend") String friend) {
+        log.info("Adding " + friend +" as friend of " + userName);
         User user = userRepository.findByUserName(userName);
         user.addFriend(friend);
         userRepository.save(user);
@@ -126,7 +127,7 @@ public class UserController {
         return user.getNearByFriends()
                 .stream()
                 .map(userRepository::findByUserName)
-                .filter(u -> !currentNearby.contains(u.getUserName()))
+                .filter(u -> !currentNearby.contains(u))
                 .collect(Collectors.toList());
     }
 }

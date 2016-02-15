@@ -126,6 +126,17 @@ public class User {
         this.nearByFriends.remove(friend.getUserName());
     }
 
-
-
+    @Override
+    public String toString() {
+        return "User{" +
+                "userName='" + userName + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", lastUpdate=" + lastUpdate +
+                ", position=" + Arrays.toString(position) +
+                ", regId='" + regId + '\'' +
+                ", friends=" + friends +
+                ", nearByFriends=" + nearByFriends +
+                '}';
+    }
 }

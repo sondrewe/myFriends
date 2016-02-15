@@ -1,6 +1,8 @@
 package no.bouvet.sandvika.myfriends.rest.eventhandler;
 
 import no.bouvet.sandvika.myfriends.rest.model.User;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.rest.core.annotation.HandleAfterCreate;
 import org.springframework.data.rest.core.annotation.HandleAfterSave;
 import org.springframework.data.rest.core.annotation.HandleBeforeCreate;
@@ -16,6 +18,7 @@ import java.util.Date;
 @Component
 @RepositoryEventHandler(User.class)
 public class UserEventHandler {
+    Logger log = LoggerFactory.getLogger(UserEventHandler.class);
 
     @HandleBeforeCreate
     public void handleBeforeCreate(User user) {
@@ -24,7 +27,7 @@ public class UserEventHandler {
 
     @HandleAfterCreate
     public void handleAfterCreate(User user) {
-        System.out.println("After Save!!!");
+        log.info("Saved user:" + user.toString());
     }
 
 }
