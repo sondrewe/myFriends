@@ -44,7 +44,8 @@ public class ProximityNotifier {
                 .build();
         try {
             Result result = sender.send(message, receiver.getRegId(), 3);
-            log.info("Sent notification to " + receiver.getUserName() + " with result " + result.toString());
+            log.info("Sent notification to " + receiver.getUserName() + " about " + user.getUserName()
+                    + " with result " + result.toString());
         } catch (IOException ioe) {
             log.error("Failed to send notification to " + receiver.getUserName() + ". \n" + ioe.getMessage());
         }

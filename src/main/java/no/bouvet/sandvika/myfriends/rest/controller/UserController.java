@@ -61,7 +61,7 @@ public class UserController {
 
     @RequestMapping(value = "/user/{id}/addFriend", method = RequestMethod.POST)
     public User addFriend(@PathVariable("id") String userName, @RequestParam(name = "friend") String friend) {
-        log.info("Adding " + friend +" as friend of " + userName);
+        log.info("Adding " + friend + " as friend of " + userName);
         User user = userRepository.findByUserName(userName);
         user.addFriend(friend);
         userRepository.save(user);
@@ -79,9 +79,7 @@ public class UserController {
     private void updateNearbyFriends(User user) {
         List<User> currentNearby;
         if (user.getFriends() == null || user.getFriends().isEmpty()) {
-            currentNearby = userRepository.findByPositionNear(user.getPositionAsPoint(), new Distance(Double.parseDouble(proximity), Metrics.KILOMETERS))
-                    .stream()
-                    .collect(Collectors.toList());
+            currentNearby = userRepository.findByPositionNear(user.getPositionAsPoint(), new Distance(Double.parseDouble(proximity), Metrics.KILOMETERS));
         } else {
             currentNearby = userRepository.findByPositionNear(user.getPositionAsPoint(), new Distance(Double.parseDouble(proximity), Metrics.KILOMETERS))
                     .stream()
@@ -94,12 +92,20 @@ public class UserController {
         remove.stream().forEach(u -> u.removeNearbyFriend(user));
         userRepository.save(remove);
         // Add current user to list of nearby friends of all added friends
-        add.stream().filter(us1 -> us1.getFriends().contains(user.getUserName())).forEach(u -> u.addNearbyFriend(user));
+        if (user.getFriends() == null || user.getFriends().isEmpty()) {
+            add.stream().forEach(u -> u.addNearbyFriend(user));
+        } else {
+            add
+                    .stream()
+                    .filter(us1 -> us1.getFriends().contains(user.getUserName()))
+                    .forEach(u -> u.addNearbyFriend(user));
+        }
         userRepository.save(add);
         // Update current users list of nearby friends
         user.setNearByFriends(currentNearby
                 .stream()
                 .map(User::getUserName)
+                .filter(u -> !u.equalsIgnoreCase(user.getUserName()))
                 .collect(Collectors.toSet()));
         // Notify added nearby friends about current user in proximity
         if (user.getFriends() == null || user.getFriends().isEmpty()) {
@@ -120,10 +126,11 @@ public class UserController {
         return currentNearby
                 .stream()
                 .filter(u -> !user.getNearByFriends().contains(u.getUserName()))
+                .filter(u -> !u.getUserName().equalsIgnoreCase(user.getUserName()))
                 .collect(Collectors.toList());
     }
 
-    private List<User> findRemovedFriends(User user, List<User> currentNearby) {
+    protected List<User> findRemovedFriends(User user, List<User> currentNearby) {
         return user.getNearByFriends()
                 .stream()
                 .map(userRepository::findByUserName)
