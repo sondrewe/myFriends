@@ -1,4 +1,4 @@
-package no.bouvet.sandvika.myfriends.rest.validators;
+package no.bouvet.sandvika.myfriends.rest.validator;
 
 import no.bouvet.sandvika.myfriends.rest.model.User;
 import no.bouvet.sandvika.myfriends.rest.repository.UserRepository;
