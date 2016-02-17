@@ -1,9 +1,8 @@
-package no.bouvet.sandvika.myfriends.rest.validator;
+package no.bouvet.sandvika.myfriends.rest.validators;
 
 import no.bouvet.sandvika.myfriends.rest.model.User;
 import no.bouvet.sandvika.myfriends.rest.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.ValidationUtils;
 import org.springframework.validation.Validator;

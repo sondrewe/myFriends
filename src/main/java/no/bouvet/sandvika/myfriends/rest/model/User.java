@@ -9,9 +9,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.*;
 
-/**
- * Created by sondre.engell on 19.01.2016.
- */
 
 @Document(collection = "users")
 public class User {
