@@ -39,7 +39,7 @@ public class ProximityNotifier {
     private void sendNotification(User receiver, User user) {
         Sender sender = new Sender(apiKey);
         Message message = new Message.Builder()
-                .addData("message", "You are now close to " + user.getFirstName())
+                .addData("message", "You are now close to " + user.getFirstName() + " " + user.getLastName())
                 .addData("proximity", proximity)
                 .build();
         try {
@@ -49,6 +49,15 @@ public class ProximityNotifier {
         } catch (IOException ioe) {
             log.error("Failed to send notification to " + receiver.getUserName() + ". \n" + ioe.getMessage());
         }
+    }
+
+    public void sendDummyNotification(String userName) {
+        User user = userRepository.findByUserName(userName);
+        User dummyUser = new User();
+        dummyUser.setUserName("dummy");
+        dummyUser.setFirstName("Jim");
+        dummyUser.setLastName("Dummy");
+        sendNotification(user, dummyUser);
     }
 
     public void notifyListAboutUser(List<User> recipientList, User user) {

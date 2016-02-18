@@ -73,6 +73,12 @@ public class UserController {
         return userRepository.findAll();
     }
 
+    @RequestMapping(value = "/user/{id}/sendDummyNotification", method = RequestMethod.POST)
+    public void sendDummyNotification(@PathVariable("id") String userName) {
+        log.info("Received request to send dummy notification to " + userName);
+        notifier.sendDummyNotification(userName);
+    }
+
     /**
      * This method does way more than it should. Refactor!
      */
