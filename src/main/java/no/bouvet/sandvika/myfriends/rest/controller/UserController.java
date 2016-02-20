@@ -1,6 +1,7 @@
 package no.bouvet.sandvika.myfriends.rest.controller;
 
 import no.bouvet.sandvika.myfriends.rest.model.User;
+import no.bouvet.sandvika.myfriends.rest.notifier.PositionNotifier;
 import no.bouvet.sandvika.myfriends.rest.notifier.ProximityNotifier;
 import no.bouvet.sandvika.myfriends.rest.repository.UserRepository;
 import org.slf4j.Logger;
@@ -12,14 +13,11 @@ import org.springframework.data.geo.Metrics;
 import org.springframework.data.geo.Point;
 import org.springframework.web.bind.annotation.*;
 
+import javax.annotation.PostConstruct;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
-
-/**
- * Created by sondre.engell on 20.01.2016.
- */
 
 @RestController
 public class UserController {
@@ -30,11 +28,20 @@ public class UserController {
     UserRepository userRepository;
 
     @Autowired
-    ProximityNotifier notifier;
+    ProximityNotifier proxNotifier;
+
+    @Autowired
+    PositionNotifier posNotifier;
 
     @Value("${proximity_km}")
-    String proximity;
+    private String proximity;
 
+    private Distance distance;
+
+    @PostConstruct
+    private void setDistance() {
+        distance = new Distance(Double.parseDouble(proximity), Metrics.KILOMETERS);
+    }
 
     @RequestMapping(value = "/user/{id}/nearbyFriends", method = RequestMethod.GET)
     public List<User> getNearbyUsers(@PathVariable("id") String userName) {
@@ -43,7 +50,7 @@ public class UserController {
         Calendar cal = Calendar.getInstance();
         cal.add(Calendar.HOUR, -1);
 
-        return userRepository.findByPositionNear(new Point(currPos[0], currPos[1]), new Distance(Double.parseDouble(proximity), Metrics.KILOMETERS))
+        return userRepository.findByPositionNear(new Point(currPos[0], currPos[1]), distance)
                 .stream()
                 .filter(u -> u.getLastUpdate().after(cal.getTime())).collect(Collectors.toList());
     }
@@ -55,6 +62,7 @@ public class UserController {
         user.setPosition(position);
         user.setLastUpdate(new Date());
         updateNearbyFriends(user);
+        sendPositionNotification(user);
         userRepository.save(user);
         return user;
     }
@@ -76,7 +84,44 @@ public class UserController {
     @RequestMapping(value = "/user/{id}/sendDummyNotification", method = RequestMethod.POST)
     public void sendDummyNotification(@PathVariable("id") String userName) {
         log.info("Received request to send dummy notification to " + userName);
-        notifier.sendDummyNotification(userName);
+        proxNotifier.sendDummyNotification(userName);
+    }
+
+    private void sendPositionNotification(User user) {
+        if (user.getFriends() == null || user.getFriends().isEmpty()) {
+            posNotifier.notifyListAboutUser(
+                    userRepository.findByPositionNear(
+                            user.getPositionAsPoint(), distance)
+                            .stream()
+                            .filter(u -> !u.getUserName().equalsIgnoreCase(user.getUserName()))
+                            .collect(Collectors.toList())
+                    , user);
+        } else {
+            posNotifier.notifyListAboutUser(
+                    userRepository.findByPositionNear(
+                            user.getPositionAsPoint(), distance)
+                            .stream()
+                            .filter(u -> !u.getUserName().equalsIgnoreCase(user.getUserName()))
+                            .filter(u -> user.getFriends().contains(u.getUserName()))
+                            .collect(Collectors.toList())
+                    , user);
+        }
+        if (user.getFriends() == null || user.getFriends().isEmpty()) {
+            posNotifier.notifyUserAboutList(user,
+                    userRepository.findByPositionNear(
+                            user.getPositionAsPoint(), distance)
+                            .stream()
+                            .filter(u -> !u.getUserName().equalsIgnoreCase(user.getUserName()))
+                            .collect(Collectors.toList()));
+        } else {
+            posNotifier.notifyUserAboutList(user,
+                    userRepository.findByPositionNear(
+                            user.getPositionAsPoint(), distance)
+                            .stream()
+                            .filter(u -> !u.getUserName().equalsIgnoreCase(user.getUserName()))
+                            .filter(u -> user.getFriends().contains(u.getUserName()))
+                            .collect(Collectors.toList()));
+        }
     }
 
     /**
@@ -85,9 +130,9 @@ public class UserController {
     private void updateNearbyFriends(User user) {
         List<User> currentNearby;
         if (user.getFriends() == null || user.getFriends().isEmpty()) {
-            currentNearby = userRepository.findByPositionNear(user.getPositionAsPoint(), new Distance(Double.parseDouble(proximity), Metrics.KILOMETERS));
+            currentNearby = userRepository.findByPositionNear(user.getPositionAsPoint(), distance);
         } else {
-            currentNearby = userRepository.findByPositionNear(user.getPositionAsPoint(), new Distance(Double.parseDouble(proximity), Metrics.KILOMETERS))
+            currentNearby = userRepository.findByPositionNear(user.getPositionAsPoint(), distance)
                     .stream()
                     .filter(u -> user.getFriends().contains(u.getUserName()))
                     .collect(Collectors.toList());
@@ -115,17 +160,17 @@ public class UserController {
                 .collect(Collectors.toSet()));
         // Notify added nearby friends about current user in proximity
         if (user.getFriends() == null || user.getFriends().isEmpty()) {
-            notifier.notifyListAboutUser(add
+            proxNotifier.notifyListAboutUser(add
                     .stream()
                     .collect(Collectors.toList()), user);
         } else {
-            notifier.notifyListAboutUser(add
+            proxNotifier.notifyListAboutUser(add
                     .stream()
                     .filter(us1 -> us1.getFriends().contains(user.getUserName()))
                     .collect(Collectors.toList()), user);
         }
         // Notify current user about added friends in proximity
-        notifier.notifyUserAboutList(user, add);
+        proxNotifier.notifyUserAboutList(user, add);
     }
 
     private List<User> findAddedFriends(User user, List<User> currentNearby) {

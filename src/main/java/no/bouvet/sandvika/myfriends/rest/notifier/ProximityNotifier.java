@@ -18,27 +18,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Created by sondre.engell on 08.02.2016.
- */
-
 @Component
-public class ProximityNotifier {
+public class ProximityNotifier extends Notifier {
 
     Logger log = LoggerFactory.getLogger(ProximityNotifier.class);
 
-    @Autowired
-    UserRepository userRepository;
-
-    @Value("${gcm.application_key}")
-    String apiKey;
-
-    @Value("${proximity_km}")
-    String proximity;
-
-    private void sendNotification(User receiver, User user) {
+    public void sendNotification(User receiver, User user) {
         Sender sender = new Sender(apiKey);
         Message message = new Message.Builder()
+                .addData("type", "PROXIMITY_NOTIFICATION")
                 .addData("message", "You are now close to " + user.getFirstName() + " " + user.getLastName())
                 .addData("proximity", proximity)
                 .build();
@@ -58,15 +46,5 @@ public class ProximityNotifier {
         dummyUser.setFirstName("Jim");
         dummyUser.setLastName("Dummy");
         sendNotification(user, dummyUser);
-    }
-
-    public void notifyListAboutUser(List<User> recipientList, User user) {
-        recipientList.stream()
-                .forEach(recipient -> sendNotification(recipient, user));
-    }
-
-    public void notifyUserAboutList(User recipient, List<User> userList) {
-        userList.stream()
-                .forEach(user -> sendNotification(recipient, user));
     }
 }
