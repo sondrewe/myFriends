@@ -28,6 +28,7 @@ public class ProximityNotifier extends Notifier {
         Message message = new Message.Builder()
                 .addData("type", "PROXIMITY_NOTIFICATION")
                 .addData("message", "You are now close to " + user.getFirstName() + " " + user.getLastName())
+                .addData("userName", user.getUserName())
                 .addData("proximity", proximity)
                 .build();
         try {
