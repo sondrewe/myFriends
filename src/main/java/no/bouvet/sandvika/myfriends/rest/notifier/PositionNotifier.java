@@ -19,6 +19,7 @@ public class PositionNotifier extends Notifier {
         Sender sender = new Sender(apiKey);
         Message message = new Message.Builder()
                 .addData("type", "POSITION_NOTIFICATION")
+                .addData("userName", user.getUserName())
                 .addData("position", user.getPosition()[0] + "," + user.getPosition()[1])
                 .build();
         try {
